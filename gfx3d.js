@@ -2,16 +2,15 @@
    Whale, hazards, HUD and menus stay on the 2D canvas above. If anything fails the 2D art takes over. */
 (function(){
 const G=window.GFX=window.GFX||{ready:false};
-if(!window.BABYLON){console.warn('gfx3d: Babylon.js not loaded, using 2D art');return}
+if(/[?&]2d=1/.test(location.search)||!window.BABYLON){console.warn('gfx3d: Babylon.js not loaded, using 2D art');return}
 const B=BABYLON,W=640,H=360,cv=document.getElementById('b');
 const fail=e=>{console.warn('gfx3d: falling back to 2D',e);G.ready=false;if(cv)cv.style.display='none'};
 try{
 const eng=new B.Engine(cv,true,{stencil:false,powerPreference:'high-performance'},true);
-eng.setHardwareScalingLevel(1/Math.min(2,window.devicePixelRatio||1));
 cv.addEventListener('webglcontextlost',()=>fail('context lost'));
 const sc=new B.Scene(eng);sc.clearColor=new B.Color4(0,0,0,1);
 const cam=new B.FreeCamera('cam',new B.Vector3(W/2,-H/2,-200),sc);cam.setTarget(new B.Vector3(W/2,-H/2,0));
-cam.mode=B.Camera.ORTHOGRAPHIC_CAMERA;cam.orthoLeft=0;cam.orthoRight=W;cam.orthoTop=0;cam.orthoBottom=-H;cam.minZ=1;cam.maxZ=400;
+cam.mode=B.Camera.ORTHOGRAPHIC_CAMERA;cam.orthoLeft=-W/2;cam.orthoRight=W/2;cam.orthoTop=H/2;cam.orthoBottom=-H/2;cam.minZ=1;cam.maxZ=400;
 const hl=new B.HemisphericLight('h',new B.Vector3(0,1,-.6),sc);hl.intensity=.75;
 const dl=new B.DirectionalLight('d',new B.Vector3(.35,-.55,1),sc);dl.intensity=.9;
 const VS='precision highp float;attribute vec3 position;attribute vec2 uv;uniform mat4 worldViewProjection;varying vec2 vUV;void main(){vUV=uv;gl_Position=worldViewProjection*vec4(position,1.);}';
@@ -57,9 +56,6 @@ const dt=new B.DynamicTexture('dot',64,sc,false),cx=dt.getContext(),gr=cx.create
 const ps=new B.ParticleSystem('motes',120,sc);ps.particleTexture=dt;ps.emitter=new B.Vector3(W+20,-H/2,10);ps.minEmitBox=new B.Vector3(0,-H/2,0);ps.maxEmitBox=new B.Vector3(0,H/2,0);
 ps.direction1=new B.Vector3(-1,.1,0);ps.direction2=new B.Vector3(-1,-.1,0);ps.minEmitPower=25;ps.maxEmitPower=70;ps.emitRate=9;ps.minLifeTime=6;ps.maxLifeTime=11;ps.minSize=1.5;ps.maxSize=4.5;
 ps.color1=new B.Color4(1,1,.9,.5);ps.color2=new B.Color4(.8,.9,1,.4);ps.colorDead=new B.Color4(1,1,1,0);ps.blendMode=B.ParticleSystem.BLENDMODE_ONEONE;ps.start();
-/* bloom + vignette + antialiasing */
-const pl=new B.DefaultRenderingPipeline('pl',false,sc,[cam]);pl.fxaaEnabled=true;pl.bloomEnabled=true;pl.bloomThreshold=.78;pl.bloomWeight=.32;pl.bloomKernel=40;pl.bloomScale=.5;
-pl.imageProcessingEnabled=true;pl.imageProcessing.vignetteEnabled=true;pl.imageProcessing.vignetteWeight=1.4;pl.imageProcessing.contrast=1.08;
 
 /* ---- 3D whale, cash and obstacles (primitives) ---- */
 const WH=new B.Color3(1,1,1),hc=new Map(),hexC=h=>{let c=hc.get(h);if(!c){c=/^#[0-9a-f]{6}$/i.test(h)?B.Color3.FromHexString(h):new B.Color3(.6,.6,.6);hc.set(h,c)}return c};
