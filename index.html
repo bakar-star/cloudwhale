@@ -19,6 +19,8 @@ canvas{width:min(100vw,calc(100dvh*16/9));aspect-ratio:16/9;display:block;outlin
 @media (orientation:portrait){canvas{position:fixed;left:50%;top:50%;width:min(100dvh,calc(100vw*16/9));transform:translate(-50%,-50%) rotate(90deg)}}
 
 #c{z-index:1}
+#s{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:0;pointer-events:none}
+@media (orientation:portrait){#s{transform:translate(-50%,-50%) rotate(90deg)}}
 #b{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:0;pointer-events:none;visibility:hidden}
 @media (orientation:portrait){#b{transform:translate(-50%,-50%) rotate(90deg)}}
 #auth{position:fixed;inset:0;z-index:50;display:none;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(5,35,60,.72);padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));font-family:Fredoka,"Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif}
@@ -52,10 +54,11 @@ canvas{width:min(100vw,calc(100dvh*16/9));aspect-ratio:16/9;display:block;outlin
 <button class="go" id="aGo" type="submit">Sign up</button>
 <div class="lk"><a id="aSw">Already have an account? Log in</a><br><a id="aFg">Forgot password?</a></div>
 </form></div>
+<canvas id="s"></canvas>
 <canvas id="b"></canvas>
 <canvas id="c" tabindex="0"></canvas>
 <script>
-const cv=document.getElementById('c'),g=cv.getContext('2d'),W=640,H=360,SEA=H-44;
+const cv=document.getElementById('c'),sv=document.getElementById('s'),sg=sv.getContext('2d'),W=640,H=360,SEA=H-44;let g=cv.getContext('2d');
 const F='"Fredoka","Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif';
 /* The world is tall: y grows downward, the sea surface sits at SEA, altitude = SEA - y.
 The camera (cam) follows the whale up and down. */
@@ -153,7 +156,7 @@ if(MP.mode==='last'&&MP.count>1&&os.length>=MP.count-1&&os.every(o=>!o.al))end()
 for(const o of Object.values(MP.opp))o.sd+=(o.d-o.sd)*Math.min(1,dt*10)}
 function drawGhosts(){for(const o of Object.values(MP.opp)){if(!o.al)continue;const x=whale.x+o.sd-dist;if(x<-70||x>W+70)continue;
 g.save();g.globalAlpha=.5;W3()||drawWhale(x,o.y,o.a||0,WS,SKINS[o.k|0]||SKINS[0],false);g.restore();txt(o.n||'',x,o.y-34,11,'#fff','center',3)}}
-function fit(){const d=Math.min(3,(window.devicePixelRatio||1)*((cv.clientWidth||W)/W));cv.width=Math.round(W*d);cv.height=Math.round(H*d);g.setTransform(d,0,0,d,0,0)}
+function fit(){const d=Math.min(3,(window.devicePixelRatio||1)*((cv.clientWidth||W)/W));cv.width=Math.round(W*d);cv.height=Math.round(H*d);g.setTransform(d,0,0,d,0,0);sv.width=cv.width;sv.height=cv.height;sg.setTransform(d,0,0,d,0,0)}
 addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,120));if(window.visualViewport)visualViewport.addEventListener('resize',fit);
 const hx=c=>[1,3,5].map(i=>parseInt(c.substr(i,2),16));
 const mix=(a,b,f)=>{const A=hx(a),B=hx(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*f)).join()+')'};
@@ -1194,14 +1197,15 @@ else if(st==='over'&&t-overAt<.45)W1(whale.x,SEA-20,.3,1,sk0);
 if(MP.on&&st!=='over'&&st!=='menu')for(const o of Object.values(MP.opp)){if(!o.al)continue;const x=whale.x+o.sd-dist;if(x<-70||x>W+70)continue;W1(x,o.y,o.a||0,WS,SKINS[o.k|0]||SKINS[0],.5)}
 if(objs&&!(st==='over'&&t-overAt>.45))for(const o of objs){if(o.x<-100||o.x>W+120)continue;
 if(o.k==='don'){if(o.x>-30&&o.x<W+30)dons.push({x:o.x,y:o.y,v:o.v})}
-else if(GFX.has(o.k)){const ow=(o.w||50)*(o.s||1),pl=BOUNCE[o.k];obl.push({ref:o,k:o.k,x:pl?o.x+ow/2:o.x,y:(pl?o.y+(LY[o.k]||0)+ow*.28:o.y)+(o.k==='coin'?Math.sin(t*4+o.x*.05)*2:0),sc:pl?ow/50:(o.s||1),rot:o.rot||0,hit:o.hit?1:0,ph:o.ph||0})}}
-GFX.update({t,bgx,cam,y0:SEA+cam,top:col(0),mid:col(H/2),bot:col(H),sp:2,gv:0,sun:1-ramp(al,500,900),d:dons,w:whs,o:obl})}
-const W3=()=>GFX.ready&&GFX.whale3d;
+else if(GFX.has(o.k)){const ow=(o.w||50)*(o.s||1),pl=BOUNCE[o.k];obl.push({ref:o,k:o.k,x:pl?o.x+ow/2:o.x,y:(pl?o.y+(LY[o.k]||0)+ow*.28:o.y)+(o.k==='coin'?Math.sin(t*4+o.x*.05)*2:o.k==='pu'?Math.sin(t*3)*4:o.k==='rdon'?Math.sin(t*4)*3:0),sc:pl?ow/50:(o.s||1),rot:o.rot||0,hit:o.hit?1:0,ph:o.ph||0,p:o.p})}}
+GFX.update({t,bgx,cam,y0:SEA+cam,top:col(0),mid:col(H/2),bot:col(H),sp:2,gv:0,sun:1-ramp(al,500,900),d:dons,w:[],o:obl})}
+const W3=()=>false;
+function skyLayer(){const g0=g;g=sg;try{sg.clearRect(0,0,W,H);sky()}finally{g=g0}}
 function draw(){
 g.save();
 if(shake>0)g.translate((Math.random()-.5)*7,(Math.random()-.5)*7);
 g.globalAlpha=1;
-if(st==='shop'){shopBg();GFX.ready&&GFX.hide()}else if(GFX.ready){g.clearRect(-20,-20,W+40,H+40);gfxFrame();sky(true)}else{sky();sea()}
+if(st==='shop'){shopBg();GFX.ready&&GFX.hide()}else if(GFX.ready){g.clearRect(-20,-20,W+40,H+40);gfxFrame();skyLayer()}else{sky();sea()}
 if(st==='menu'){
 g.save();g.translate(30,252);g.rotate(t*.1);donut(0,0,3.4,0);g.restore();
 g.save();g.translate(585,48);g.rotate(-t*.08);donut(0,0,2.4,1);g.restore();

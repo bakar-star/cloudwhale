@@ -6,9 +6,9 @@ if(/[?&]2d=1/.test(location.search)||!window.BABYLON){console.warn('gfx3d: Babyl
 const B=BABYLON,W=640,H=360,cv=document.getElementById('b');
 const fail=e=>{console.warn('gfx3d: falling back to 2D',e);G.ready=false;if(cv)cv.style.display='none'};
 try{
-const eng=new B.Engine(cv,true,{stencil:false,powerPreference:'high-performance'},true);
+const eng=new B.Engine(cv,true,{stencil:false,alpha:true,powerPreference:'high-performance'},true);
 cv.addEventListener('webglcontextlost',()=>fail('context lost'));
-const sc=new B.Scene(eng);sc.clearColor=new B.Color4(0,0,0,1);
+const sc=new B.Scene(eng);sc.clearColor=new B.Color4(0,0,0,0);
 const cam=new B.FreeCamera('cam',new B.Vector3(W/2,-H/2,-200),sc);cam.setTarget(new B.Vector3(W/2,-H/2,0));
 cam.mode=B.Camera.ORTHOGRAPHIC_CAMERA;cam.orthoLeft=-W/2;cam.orthoRight=W/2;cam.orthoTop=H/2;cam.orthoBottom=-H/2;cam.minZ=1;cam.maxZ=400;
 const hl=new B.HemisphericLight('h',new B.Vector3(0,1,-.6),sc);hl.intensity=.75;
@@ -33,7 +33,7 @@ const bgM=shader('cwbg','precision highp float;varying vec2 vUV;uniform float ti
 'float bi=floor(uv.x*32.);float bh=.05+.2*abs(sin(time*3.+bi*.7)*cos(time*1.7+bi*.31));float eq=step(uv.y,bh)*step(.1,fract(uv.x*32.));'+
 'col+=gv*(bm*.4+eq*(.5+.5*cos(6.28*(bi/32.+time*.1+vec3(0.,.33,.67))))*.45);}'+
 'gl_FragColor=vec4(col,1.);}',['time','scroll','spLine','gv','sun','cTop','cMid','cBot']);
-const bg=B.MeshBuilder.CreatePlane('bg',{width:W,height:H},sc);bg.position.set(W/2,-H/2,50);bg.material=bgM;
+const bg=B.MeshBuilder.CreatePlane('bg',{width:W,height:H},sc);bg.position.set(W/2,-H/2,50);bg.material=bgM;bg.setEnabled(false);
 /* animated sea with caustics */
 const seaM=shader('cwsea','precision highp float;varying vec2 vUV;uniform float time,bgx;'+
 'void main(){float x=vUV.x*660.-10.,py=(1.-vUV.y)*400.;float wave=8.+sin(x*.03+time*2.+bgx*.008)*4.;float dp=(py-wave)/290.;'+
@@ -62,6 +62,7 @@ const WH=new B.Color3(1,1,1),hc=new Map(),hexC=h=>{let c=hc.get(h);if(!c){c=/^#[
 function P(root,t,mat,o,pos,scl,rot){let m;
  if(t==='s')m=B.MeshBuilder.CreateSphere('p',{diameter:1,segments:12},sc);
  else if(t==='b')m=B.MeshBuilder.CreateBox('p',{size:1},sc);
+ else if(t==='t')m=B.MeshBuilder.CreateTorus('p',{diameter:o.d,thickness:o.t,tessellation:24},sc),m.rotation.x=Math.PI/2;
  else if(t==='i')m=B.MeshBuilder.CreateIcoSphere('p',{radius:.5,subdivisions:1,flat:true},sc);
  else m=B.MeshBuilder.CreateCylinder('p',Object.assign({tessellation:20},o),sc);
  if(scl)m.scaling.set(scl[0],scl[1],scl[2]);if(pos)m.position.set(pos[0],pos[1],pos[2]);if(rot)m.rotation.set(rot[0],rot[1],rot[2]);m.material=mat;m.parent=root;return m}
@@ -80,8 +81,8 @@ function setWhale(q,w,p){const a=hexC(w.a);q.mb.diffuseColor.copyFrom(hexC(w.b))
  for(const m of q.mats)m.alpha=w.al;
  q.r.setEnabled(true);q.r.position.set(w.x,-(w.y+p.cam),-30);q.r.rotation.set(0,.25,-w.ang);q.r.scaling.setAll(w.sc);
  q.tail.rotation.z=Math.sin(p.t*14)*.35;q.blade.rotation.y=p.t*30}
-const obs=new Map(),HAS=new Set(['coin','cloud','storm','toilet','burger','boat','balloon','ball','dreidel','moon','ufo','disco','crow','bee','meteor','rock']);
-function mkObs(k){const r=new B.TransformNode('o',sc);let wings=null;
+const obs=new Map(),HAS=new Set(['pu','rdon']);
+function mkObs(k,pt){const r=new B.TransformNode('o',sc);let wings=null;
  switch(k){
  case'coin':{P(r,'b',std(.3,.75,.35,.3),0,[0,0,0],[22,12,3]);P(r,'b',std(.9,.82,.55,.3),0,[0,0,-.3],[6,12.5,3.4]);break}
  case'cloud':case'storm':{const m=k==='cloud'?std(.97,.98,1,.55):std(.35,.38,.5,.2);P(r,'s',m,0,[-14,-2,0],[32,28,28]);P(r,'s',m,0,[2,5,0],[42,36,32]);P(r,'s',m,0,[18,-2,0],[34,28,28]);P(r,'b',m,0,[2,-8,0],[44,12,26]);break}
@@ -99,24 +100,34 @@ function mkObs(k){const r=new B.TransformNode('o',sc);let wings=null;
  case'bee':{P(r,'s',std(1,.82,.1,.4),0,[0,0,0],[18,13,13]);const bk=std(.05,.05,.05,0);P(r,'b',bk,0,[-2,0,0],[3,13.5,13.5]);P(r,'b',bk,0,[4,0,0],[3,12,12]);
   const wm=std(.9,.95,1,.5);wings=[P(r,'s',wm,0,[0,8,2],[8,12,2]),P(r,'s',wm,0,[0,8,-2],[8,12,2])];break}
  case'meteor':{P(r,'s',std(1,.55,.2,.9),0,[0,0,0],[18,18,18]);P(r,'c',std(1,.5,.15,.8),{height:50,diameterTop:0,diameterBottom:12},[25,19,2],null,[0,0,.65-Math.PI/2]);break}
+ case'rdon':{r.add=1;const dm=std(.94,.64,.35),a=P(r,'t',dm,{d:23,t:11},[0,0,0]);const cols=[[1,.2,.2],[1,.6,.1],[1,.9,.2],[.3,.85,.3],[.3,.6,1],[.7,.4,1]];cols.forEach((c,i)=>P(r,'t',std(c[0],c[1],c[2],.5),{d:21-i*1.4,t:2.2},[0,0,-3.2-i*.15]));break}
+ case'pu':{const col={turbo:'#ffd23f',magnet:'#ff6b6b',shield:'#6fc4ff',rocket:'#ff5a3c',speed:'#ffb02e',scuba:'#38d6c4',moto:'#ff5a3c',sleigh:'#d9362c',broom:'#e0a83a',sub:'#ffd23f'}[pt]||'#ffd23f';const c=hexC(col),m=std(c.r,c.g,c.b,.45);
+  const gm=std(.75,.9,1,.5);gm.alpha=.4;P(r,'s',gm,0,[0,0,-8],[38,38,38]);
+  if(pt==='turbo'){for(let i=0;i<4;i++)P(r,'t',std(...[[1,.2,.2],[1,.8,.2],[.3,.85,.3],[.3,.6,1]][i],.5),{d:26-i*5,t:2.4},[0,0,0]);}
+  else if(pt==='magnet'){P(r,'t',m,{d:15,t:5},[0,-1,0]);P(r,'b',std(1,1,1,.5),0,[-7.5,-8,0],[6,5,5]);P(r,'b',std(1,1,1,.5),0,[7.5,-8,0],[6,5,5])}
+  else if(pt==='shield'){P(r,'s',m,0,[0,0,0],[22,26,8])}
+  else if(pt==='rocket'){P(r,'c',std(1,1,1,.4),{height:24,diameterTop:0,diameterBottom:10},[0,0,0],null,[0,0,-.9]);P(r,'b',m,0,[-6,-6,0],[10,10,3],[0,0,.8])}
+  else if(pt==='scuba'){P(r,'c',m,{height:20,diameter:10},[0,0,0]);P(r,'b',std(1,1,1,.5),0,[0,0,-5],[4,8,3])}
+  else{P(r,'b',m,0,[0,-2,0],[24,10,8]);P(r,'b',std(1,1,1,.5),0,[0,5,0],[10,7,7])}
+  break}
  case'rock':{P(r,'i',std(.5,.48,.5,.15),0,[0,0,0],[40,36,36]);break}
  default:return null}
  return{r,wings}}
-G.has=k=>false&&HAS.has(k);G.whale3d=false; /* set true / restore HAS to use the 3D whale and obstacles */
+G.has=k=>HAS.has(k);G.whale3d=false; /* set true / restore HAS to use the 3D whale and obstacles */
 const cT=new B.Color3(),cM=new B.Color3(),cB=new B.Color3();let lw=0,lh=0;
 G.update=p=>{if(!G.ready)return;try{
  cv.style.visibility='visible';
  if(cv.clientWidth!==lw||cv.clientHeight!==lh){lw=cv.clientWidth;lh=cv.clientHeight;eng.resize()}
  cT.set(p.top[0],p.top[1],p.top[2]);cM.set(p.mid[0],p.mid[1],p.mid[2]);cB.set(p.bot[0],p.bot[1],p.bot[2]);
- bgM.setFloat('time',p.t);bgM.setFloat('scroll',p.bgx);bgM.setFloat('spLine',p.sp);bgM.setFloat('gv',p.gv);bgM.setFloat('sun',p.sun);bgM.setColor3('cTop',cT);bgM.setColor3('cMid',cM);bgM.setColor3('cBot',cB);
+ 
  seaM.setFloat('time',p.t);seaM.setFloat('bgx',p.bgx);sea.position.y=-(p.y0-8)-200;sea.setEnabled(p.y0<H+10);
  let u=0;for(const o of p.d){if(u>=pool.length){if(pool.length>=90)break;pool.push(make())}const d=pool[u++];d.root.setEnabled(true);
   d.root.position.set(o.x,-(o.y+Math.sin(p.t*4+o.x*.05)*2.5+p.cam),0);d.root.rotation.set(Math.sin(p.t*1.1+o.x*.03)*.35,Math.sin(p.t*1.5+o.x*.05)*.6,0);d.frost.material=frostM[o.v||0]}
  for(let i=u;i<pool.length;i++)pool[i].root.setEnabled(false);
  let wi=0;for(const w of(p.w||[])){if(wi>=wp.length){if(wp.length>=8)break;wp.push(mkWhale())}setWhale(wp[wi++],w,p)}for(let i=wi;i<wp.length;i++)wp[i].r.setEnabled(false);
- const seen=new Set();for(const o of(p.o||[])){let n=obs.get(o.ref);if(!n){n=mkObs(o.k);if(!n)continue;obs.set(o.ref,n)}seen.add(o.ref);
+ const seen=new Set();for(const o of(p.o||[])){let n=obs.get(o.ref);if(!n){n=mkObs(o.k,o.p);if(!n)continue;obs.set(o.ref,n)}seen.add(o.ref);
   n.r.setEnabled(true);n.r.position.set(o.x,-(o.y+p.cam),-5);n.r.scaling.set(o.sc,o.sc*(o.hit?.8:1),o.sc);
-  n.r.rotation.z=o.k==='rock'?-o.rot:o.k==='coin'?Math.sin(p.t*3+o.ph)*.15:Math.sin(p.t*2+o.x*.02)*.05;n.r.rotation.y=Math.sin(p.t*1.2+o.x*.03)*.35;
+  n.r.rotation.z=o.k==='rock'?-o.rot:o.k==='coin'?Math.sin(p.t*3+o.ph)*.15:Math.sin(p.t*2+o.x*.02)*.05;n.r.rotation.y=o.k==='rdon'?Math.sin(p.t*1.5)*.5:Math.sin(p.t*1.2+o.x*.03)*.35;
   if(n.wings){const f=Math.sin(p.t*(o.k==='bee'?50:14)+o.ph)*.8;n.wings.forEach((m,i)=>m.rotation.z=(i?-1:1)*f)}}
  for(const[ref,n]of obs)if(!seen.has(ref)){n.r.getChildMeshes().forEach(m=>m.dispose());n.r.dispose();obs.delete(ref)}
  sc.render()}catch(e){fail(e)}};
