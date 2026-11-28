@@ -102,7 +102,7 @@ function mkObs(k){const r=new B.TransformNode('o',sc);let wings=null;
  case'rock':{P(r,'i',std(.5,.48,.5,.15),0,[0,0,0],[40,36,36]);break}
  default:return null}
  return{r,wings}}
-G.has=k=>HAS.has(k);G.whale3d=true;
+G.has=k=>false&&HAS.has(k);G.whale3d=false; /* set true / restore HAS to use the 3D whale and obstacles */
 const cT=new B.Color3(),cM=new B.Color3(),cB=new B.Color3();let lw=0,lh=0;
 G.update=p=>{if(!G.ready)return;try{
  cv.style.visibility='visible';

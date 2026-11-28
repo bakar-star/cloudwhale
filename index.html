@@ -674,10 +674,10 @@ g.fillStyle='#ffe7ae';g.fillRect(0,y0+30,W,14);
 function puffs(a,rgb){const pk=rgb==='255,255,255'?'w':rgb==='255,215,250'?'p':'y',L=W+300,Y=H+160;g.save();g.globalAlpha=Math.min(.28,a*.7);for(let i=0;i<5;i++){const x=(((i*190-bgx*(.07+i*.015))%L)+L)%L-150,y=(((50+i*78+cam*.12)%Y)+Y)%Y-80,w=60+(i%3)*28,s=cloudSprite(i%3,w,pk);g.drawImage(s.c,x-s.w/2,y-s.h/2,s.w,s.h)}g.restore()}
 function puffsOld(a,rgb){const L=W+240,Y=H+120;for(let i=0;i<5;i++){const x=(((i*190-bgx*(.07+i*.015))%L)+L)%L-120,y=(((50+i*78+cam*.12)%Y)+Y)%Y-60,r=12+(i%3)*5;g.fillStyle='rgba('+rgb+','+a+')';g.beginPath();for(const[dx,dy,q]of[[0,0,r],[r*1.1,3,r*.8],[-r*1.1,4,r*.7],[r*.2,-r*.5,r*.8]]){g.moveTo(x+dx+q,y+dy);g.arc(x+dx,y+dy,q,0,7)}g.fill()}}
 function birds(a){const L=W+120,Y=H+80;g.save();g.globalAlpha=a*.55;g.strokeStyle='#27506a';g.lineWidth=1.6;g.lineCap='round';for(let i=0;i<3;i++){const x=(((i*230+60-bgx*(.35+i*.05))%L)+L)%L-60,y=(((70+i*90+cam*.2)%Y)+Y)%Y-40,f=Math.sin(t*6+i*2)*4;g.beginPath();g.moveTo(x-7,y-f);g.quadraticCurveTo(x-3,y-4,x,y);g.quadraticCurveTo(x+3,y-4,x+7,y-f);g.stroke()}g.restore()}
-function sky(){
+function sky(noBg){
 const gr=g.createLinearGradient(0,0,0,H);
 for(let i=0;i<=18;i++)gr.addColorStop(i/18,skyAt(SEA-(i*20-cam)));
-g.fillStyle=gr;g.fillRect(0,0,W,H);
+if(!noBg){g.fillStyle=gr;g.fillRect(0,0,W,H)}
 const ca=SEA-(H/2-cam);
 const wB=1-ramp(ca,500,900),wM=ramp(ca,900,1300)*(1-ramp(ca,2500,2900)),wY=ramp(ca,2700,3100)*(1-ramp(ca,3300,3500));
 if(wB>0)wisps('255,255,255',wB*.5,4,300,.12,66);
@@ -1195,13 +1195,13 @@ if(MP.on&&st!=='over'&&st!=='menu')for(const o of Object.values(MP.opp)){if(!o.a
 if(objs&&!(st==='over'&&t-overAt>.45))for(const o of objs){if(o.x<-100||o.x>W+120)continue;
 if(o.k==='don'){if(o.x>-30&&o.x<W+30)dons.push({x:o.x,y:o.y,v:o.v})}
 else if(GFX.has(o.k)){const ow=(o.w||50)*(o.s||1),pl=BOUNCE[o.k];obl.push({ref:o,k:o.k,x:pl?o.x+ow/2:o.x,y:(pl?o.y+(LY[o.k]||0)+ow*.28:o.y)+(o.k==='coin'?Math.sin(t*4+o.x*.05)*2:0),sc:pl?ow/50:(o.s||1),rot:o.rot||0,hit:o.hit?1:0,ph:o.ph||0})}}
-GFX.update({t,bgx,cam,y0:SEA+cam,top:col(0),mid:col(H/2),bot:col(H),sp:1-(SEA-STORM+cam)/H,gv:ramp(al,5000,5500),sun:1-ramp(al,500,900),d:dons,w:whs,o:obl})}
+GFX.update({t,bgx,cam,y0:SEA+cam,top:col(0),mid:col(H/2),bot:col(H),sp:2,gv:0,sun:1-ramp(al,500,900),d:dons,w:whs,o:obl})}
 const W3=()=>GFX.ready&&GFX.whale3d;
 function draw(){
 g.save();
 if(shake>0)g.translate((Math.random()-.5)*7,(Math.random()-.5)*7);
 g.globalAlpha=1;
-if(st==='shop'){shopBg();GFX.ready&&GFX.hide()}else if(GFX.ready){g.clearRect(-20,-20,W+40,H+40);gfxFrame()}else{sky();sea()}
+if(st==='shop'){shopBg();GFX.ready&&GFX.hide()}else if(GFX.ready){g.clearRect(-20,-20,W+40,H+40);gfxFrame();sky(true)}else{sky();sea()}
 if(st==='menu'){
 g.save();g.translate(30,252);g.rotate(t*.1);donut(0,0,3.4,0);g.restore();
 g.save();g.translate(585,48);g.rotate(-t*.08);donut(0,0,2.4,1);g.restore();
