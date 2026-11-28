@@ -15,19 +15,22 @@ html,body{height:100dvh;width:100%;overflow:hidden;overscroll-behavior:none}
 canvas{width:min(100vw,calc(100dvh*16/9));aspect-ratio:16/9;display:block;outline:none;image-rendering:auto}
 @media (orientation:portrait){canvas{position:fixed;left:50%;top:50%;width:min(100dvh,calc(100vw*16/9));transform:translate(-50%,-50%) rotate(90deg)}}
 
-#auth{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(5,35,60,.72);padding:16px;font-family:Fredoka,"Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif}
+#auth{position:fixed;inset:0;z-index:50;display:none;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(5,35,60,.72);padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));font-family:Fredoka,"Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif}
 #auth.on{display:flex}
-#auth .box{position:relative;width:min(380px,100%);background:#1f86d4;border:4px solid #fff;border-radius:22px;padding:22px 20px 18px;box-shadow:0 7px 0 #0b4f8a,0 18px 30px rgba(0,30,60,.4);color:#fff;display:flex;flex-direction:column;gap:10px}
-#auth h2{margin:0;text-align:center;font-size:30px;color:#ffcf1f;-webkit-text-stroke:5px #6b3a0c;paint-order:stroke fill}
+#auth *{box-sizing:border-box}
+#auth .box{position:relative;margin:auto;width:min(380px,100%);background:#1f86d4;border:4px solid #fff;border-radius:22px;padding:22px 20px 18px;box-shadow:0 7px 0 #0b4f8a,0 18px 30px rgba(0,30,60,.4);color:#fff;display:flex;flex-direction:column;gap:10px}
+#auth h2{margin:0;padding:0 26px;text-align:center;font-size:clamp(22px,7vw,30px);line-height:1.1;color:#ffcf1f;-webkit-text-stroke:5px #6b3a0c;paint-order:stroke fill}
 #auth p{margin:0 0 4px;text-align:center;font-size:15px;color:#e6f6ff}
-#auth input{width:100%;font:inherit;font-weight:700;font-size:17px;padding:11px 13px;border-radius:13px;border:3px solid #bfeaf5;background:#fff;color:#134d68;outline:none}
+#auth input{width:100%;min-width:0;font:inherit;font-weight:700;font-size:16px;padding:11px 13px;border-radius:13px;border:3px solid #bfeaf5;background:#fff;color:#134d68;outline:none}
 #auth input:focus{border-color:#ffcf1f}
 #auth .go{font:inherit;font-weight:700;font-size:20px;color:#fff;border:0;cursor:pointer;padding:13px;border-radius:15px;background:linear-gradient(#ffd45a,#ffbe2e);box-shadow:0 5px 0 #c98a10;text-shadow:0 2px 0 #a86a00;margin-top:4px}
 #auth .go:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 #c98a10}
 #auth .go:disabled{opacity:.6}
-#auth .lk{text-align:center;font-size:14px;color:#d9f1ff}
-#auth .lk a{color:#fff;font-weight:700;text-decoration:underline;cursor:pointer}
-#auth .x{position:absolute;right:10px;top:8px;border:0;background:none;color:#fff;font:700 28px/1 sans-serif;cursor:pointer;padding:4px 8px}
+#auth .lk{text-align:center;font-size:14px;line-height:1.7;color:#d9f1ff}
+#auth .lk a{color:#fff;font-weight:700;text-decoration:underline;cursor:pointer;padding:4px 2px}
+#auth .x{position:absolute;right:6px;top:4px;border:0;background:none;color:#fff;font:700 30px/1 sans-serif;cursor:pointer;padding:6px 10px}
+@media (max-height:560px){#auth .box{padding:12px 16px 10px;gap:7px;border-radius:18px}#auth h2{font-size:22px;-webkit-text-stroke:4px #6b3a0c}#auth p{display:none}#auth input{padding:8px 12px}#auth .go{padding:9px;font-size:18px;margin-top:2px}#auth .lk{font-size:13px;line-height:1.5}}
+@media (max-height:400px){#auth .box{width:min(520px,100%);display:grid;grid-template-columns:1fr 1fr;column-gap:12px}#auth h2,#auth #aErr,#auth #aP,#auth .go,#auth .lk{grid-column:1/-1}}
 #aErr{min-height:20px;text-align:center;font-weight:700;font-size:14px;color:#fff;background:rgba(255,90,90,.9);border-radius:10px;padding:6px 10px;display:none}
 #aErr.ok{background:rgba(60,170,90,.95)}
 </style>
@@ -173,7 +176,7 @@ caw:()=>tone(520,.14,'sawtooth',.05,300),boom:()=>{tone(120,.5,'sawtooth',.18,30
 /* ---------- cloud save glue (see cloud.js + database.rules.json) ---------- */
 function cloudApply(d,refused){
 if(st==='play'||st==='pause'){cloudPending=d;return}
-coins=d.coins|0;best=d.best|0;owned=Object.keys(d.owned||{0:true}).map(Number).sort((a,b)=>a-b);ownedB=Object.keys(d.ownedB||{});
+coins=d.coins|0;best=d.best|0;const has=o=>Object.keys(o||{}).filter(k=>o[k]===true);owned=has(d.owned||{0:true}).map(Number).sort((a,b)=>a-b);if(!owned.includes(0))owned.unshift(0);ownedB=has(d.ownedB);
 skin=owned.includes(+d.skin)?+d.skin:0;tutDone=!!d.tut;if(tutDone&&tut)tut=null;cloudOn=true;save();
 if(refused)toast={s:'Server kept the saved progress',l:2.2};
 }
@@ -199,7 +202,8 @@ if(!window.cloud||cloud.state==='off'||cloud.state==='pending')return authMsg('C
 const nm=$a('aN').value.trim(),em=$a('aE').value.trim(),pw=$a('aP').value;$a('aGo').disabled=true;authMsg('');
 try{if(authMode==='signup')await cloud.signup(nm,em,pw);else await cloud.login(em,pw);
 const f=authAfter;authAfter=null;closeAuth();$a('aP').value='';if(f)f()}
-catch(e){console.warn(e);authMsg(ERR[e.code]||'Something went wrong. Try again.')}
+catch(e){console.warn(e);const raw=String(e&&(e.code||e.message)||'');
+authMsg(ERR[e.code]||(/permission/i.test(raw)?'The server refused to save your profile. In Firebase, publish the latest rules, then log in with the same email.':'Something went wrong ('+raw.slice(0,70)+'). Try again.'))}
 $a('aGo').disabled=false};
 function doLogout(){if(!window.cloud||!cloud.logout)return;cloud.logout().catch(()=>{toast={s:'Could not log out',l:1.6}})}
 const cloudDo=(fn,fail)=>{if(!cloudOn||!window.cloud||!cloud.on||MP.local)return;try{fn(cloud).catch(()=>{toast={s:fail||'Could not save',l:2}})}catch(e){}};
