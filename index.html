@@ -261,7 +261,7 @@ const canBuy=()=>SKINS.some((s,i)=>!owned.includes(i)&&coins>=s.c)||BOOSTS.some(
 
 /* ---------- input ---------- */
 const btn={pause:{x:14,y:12,w:34,h:34}};
-const mLocal={x:14,y:250,w:108,h:32},mOnline={x:14,y:288,w:108,h:32},mGear={x:14,y:12,w:38,h:38},mChest={x:400,y:270,w:56,h:56},mPlay={x:468,y:268,w:150,h:62};
+const mOnline={x:14,y:282,w:112,h:38},mGear={x:14,y:12,w:38,h:38},mChest={x:400,y:270,w:56,h:56},mPlay={x:468,y:268,w:150,h:62};
 const oHome={x:14,y:12,w:40,h:40},oChest={x:196,y:272,w:62,h:58},oRestart={x:268,y:268,w:176,h:64};
 const tabA={x:150,y:12,w:150,h:34},tabB={x:310,y:12,w:150,h:34};
 const dX={x:14,y:12,w:38,h:38},dR=[{x:232,y:84,w:176,h:40},{x:232,y:132,w:176,h:40},{x:232,y:180,w:176,h:40}],dOK={x:270,y:222,w:100,h:36};
@@ -308,7 +308,6 @@ if(st==='menu'){
 if(dlg)return dlgTap(p);
 if(hit(mGear,p)){dlg='settings';sfx.tick();return}
 if(hit(mChest,p))return openShop();
-if(hit(mLocal,p)){location.href='versus.html';return}
 if(hit(mOnline,p)){location.href='lobby.html';return}
 if(MP.on)return;
 return startReady();
@@ -1094,7 +1093,7 @@ coinPill(W-106,12);iconGear(mGear);
 g.save();g.translate(176,64);g.rotate(-.1);txt('CLOUD',0,0,56,'#ffcf1f','center',12,'#6b3a0c');txt('WHALE',22,50,56,'#ffcf1f','center',12,'#6b3a0c');g.restore();
 txt('Tap, click or press Space to flap  •  M mute  •  P pause',14,340,12,'#fff','left',4);
 iconChest(mChest);
-for(const[b,l]of[[mLocal,'2P LOCAL'],[mOnline,'ONLINE']]){pad(b,'#1fa0c6','#0f6f92',10);txt(l,b.x+b.w/2,b.y+22,14,'#fff','center',3.5,'#0b4f6a')}
+pad(mOnline,'#ffbe2e','#c98a10',12);txt('PLAY ONLINE',mOnline.x+mOnline.w/2,mOnline.y+25,14,'#fff','center',4,'#a86a00')
 purplePad(mPlay,false);
 g.fillStyle='#4a1a90';g.beginPath();g.moveTo(mPlay.x+62,mPlay.y+16);g.lineTo(mPlay.x+100,mPlay.y+31);g.lineTo(mPlay.x+62,mPlay.y+46);g.closePath();g.fill();
 if(dlg)drawDlg();

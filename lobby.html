@@ -1,58 +1,110 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cloud Whale Online</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cloud Whale – Online</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap">
 <style>
-body{margin:0;min-height:100vh;font:16px system-ui,sans-serif;background:#0f8fb8;color:#fff;display:flex;flex-direction:column;align-items:center;padding:28px 16px;box-sizing:border-box;text-align:center;gap:12px}
-input,select,button{font:inherit;padding:10px 14px;border-radius:12px;border:0}
-button{background:#8a2ee0;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.5}
-#lobby{display:none;flex-direction:column;gap:10px;align-items:center}
-#code{font-size:44px;font-weight:800;letter-spacing:6px}
-ul{list-style:none;padding:0;margin:0;min-width:200px}li{padding:6px 12px;margin:4px 0;background:rgba(0,0,0,.25);border-radius:10px}
-#msg{min-height:1.4em;color:#ffe;}
-a{color:#fff}
+:root{--ink:#134d68;--pur:#8a2ee0;--pur2:#5b1fa8;--gold:#ffcf1f;--panel:#1f86d4;--panel2:#0b4f8a}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:Fredoka,"Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;font-weight:500;color:#fff;
+ background:linear-gradient(#1fc6ea 0%,#8fe0f5 45%,#1286ad 46%,#0a4468 75%,#062a45 100%) fixed;
+ min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;
+ padding-top:max(24px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom))}
+h1{margin:0 0 18px;text-align:center;font-weight:700;font-size:clamp(40px,11vw,68px);line-height:.95;color:var(--gold);
+ -webkit-text-stroke:8px #6b3a0c;paint-order:stroke fill;transform:rotate(-3deg);letter-spacing:1px}
+h1 small{display:block;font-size:.42em;color:#fff;-webkit-text-stroke:5px var(--ink);transform:none;margin-top:6px}
+.card{width:min(420px,100%);background:var(--panel);border:4px solid #fff;border-radius:22px;padding:22px 20px;
+ box-shadow:0 7px 0 var(--panel2),0 18px 30px rgba(0,30,60,.35);display:flex;flex-direction:column;gap:14px}
+label{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#d9f1ff}
+input{width:100%;font:inherit;font-weight:700;font-size:18px;padding:12px 14px;border-radius:14px;border:3px solid #bfeaf5;background:#fff;color:var(--ink);outline:none}
+input:focus{border-color:var(--gold)}
+input::placeholder{color:#8bb3c4;font-weight:500}
+#cd{text-align:center;letter-spacing:8px;text-transform:uppercase;font-size:24px}
+.btn{font:inherit;font-weight:700;font-size:20px;color:#fff;border:0;cursor:pointer;padding:14px 18px;border-radius:16px;
+ background:linear-gradient(#c36bff,var(--pur));box-shadow:0 5px 0 var(--pur2);text-shadow:0 2px 0 rgba(60,10,110,.6);width:100%;transition:transform .08s,box-shadow .08s}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 var(--pur2)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.gold{background:linear-gradient(#ffd45a,#ffbe2e);box-shadow:0 5px 0 #c98a10;text-shadow:0 2px 0 #a86a00}
+.btn.gold:active:not(:disabled){box-shadow:0 1px 0 #c98a10}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.or{display:flex;align-items:center;gap:10px;color:#d9f1ff;font-size:14px}.or:before,.or:after{content:"";flex:1;height:2px;background:rgba(255,255,255,.35);border-radius:2px}
+.code{background:rgba(0,20,40,.35);border-radius:16px;padding:10px;text-align:center}
+.code b{display:block;font-size:46px;letter-spacing:10px;color:var(--gold);-webkit-text-stroke:5px #6b3a0c;paint-order:stroke fill;padding-left:10px}
+.code span{font-size:13px;color:#d9f1ff}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+li{display:flex;align-items:center;gap:10px;background:#fff;color:var(--ink);font-weight:700;font-size:18px;padding:9px 12px;border-radius:14px}
+li i{width:14px;height:14px;border-radius:50%;flex:none;background:var(--c);box-shadow:inset -2px -2px 0 rgba(0,0,0,.2)}
+li em{margin-left:auto;font-style:normal;font-size:12px;color:#fff;background:#ff5a8a;border-radius:9px;padding:2px 8px}
+.seg{display:flex;background:rgba(0,20,40,.35);border-radius:16px;padding:4px;gap:4px}
+.seg button{flex:1;font:inherit;font-weight:700;font-size:15px;color:#d9f1ff;background:transparent;border:0;border-radius:12px;padding:10px 6px;cursor:pointer}
+.seg button.on{background:#fff;color:var(--ink)}
+.hint{text-align:center;color:#d9f1ff;font-size:14px;min-height:1.3em}
+#msg{min-height:22px;margin-top:14px;font-weight:700;color:#fff;background:rgba(255,90,90,.9);padding:8px 16px;border-radius:12px;display:none}
+.back{margin-top:16px;color:#fff;font-weight:700;text-decoration:none;background:rgba(0,30,60,.4);padding:8px 16px;border-radius:12px}
+.hide{display:none!important}
 </style></head><body>
-<h1>Cloud Whale Online</h1>
-<div id="start">
-  <p><input id="nm" placeholder="Your name" maxlength="10"></p>
-  <p><button id="mk">Create room</button></p>
-  <p>or join: <input id="cd" placeholder="Code" maxlength="4" size="5" style="text-transform:uppercase"> <button id="jn">Join</button></p>
+<h1>CLOUD<br>WHALE<small>ONLINE</small></h1>
+
+<div class="card" id="start">
+  <div><label for="nm">Your name</label><input id="nm" placeholder="Whale" maxlength="10" autocomplete="off"></div>
+  <button class="btn gold" id="mk">Create room</button>
+  <div class="or">or join a friend</div>
+  <div><input id="cd" placeholder="CODE" maxlength="4" autocomplete="off"></div>
+  <button class="btn" id="jn">Join room</button>
 </div>
-<div id="lobby">
-  <div>Room code</div><div id="code"></div>
+
+<div class="card hide" id="lobby">
+  <div class="code"><span>ROOM CODE</span><b id="code"></b><span>Share this with your friends</span></div>
+  <div><label>Players</label></div>
   <ul id="ls"></ul>
-  <div id="hostui" hidden>
-    <select id="md"><option value="race">Race (furthest wins)</option><option value="last">Last whale standing</option></select>
-    <button id="go">Start</button>
+  <div id="hostui" class="hide" style="display:flex;flex-direction:column;gap:12px">
+    <div><label>Mode</label>
+      <div class="seg" id="seg"><button data-m="race" class="on">Race</button><button data-m="last">Last whale</button></div>
+      <div class="hint" id="mh">Furthest whale wins</div></div>
+    <button class="btn" id="go">Start game</button>
   </div>
-  <div id="wait" hidden>Waiting for the host to start…</div>
+  <div class="hint hide" id="wait">Waiting for the host to start…</div>
 </div>
+
 <div id="msg"></div>
-<a href="index.html">← Back to game</a>
+<a class="back" href="index.html">← Back to game</a>
+
 <script type="module">
 const $=i=>document.getElementById(i),id='u'+Math.random().toString(36).slice(2,8),MAX=4;
-let F;try{F=await import('./fb.js')}catch(e){$('msg').textContent='Firebase not configured: edit fb.js';throw e}
+const COL=['#c455e0','#ff9acb','#86f2c4','#ffe27a'];
+function err(t){const m=$('msg');m.textContent=t;m.style.display=t?'block':'none';if(t)setTimeout(()=>m.style.display='none',3500)}
+let F;try{F=await import('./fb.js')}catch(e){err('Could not connect to Firebase. Check fb.js');throw e}
 const {db,ref,set,get,remove,onValue,onDisconnect}=F;
-let room,host=false,off=0,names={},went=false,name='Whale';
+let room,host=false,off=0,names={},went=false,name='Whale',mode='race';
 onValue(ref(db,'.info/serverTimeOffset'),s=>off=s.val()||0);
 const R=p=>ref(db,`rooms/${room}/${p}`);
+const clean=s=>String(s).replace(/[<>&"]/g,'');
+$('nm').value=localStorage.getItem('cwName')||'';
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;
+  document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x===b));
+  $('mh').textContent=mode==='race'?'Furthest whale wins':'Last whale flying wins'});
 async function enter(code,h){
-  room=code;host=h;name=$('nm').value.trim()||'Whale';
-  const L=R(`lobby/${id}`);await set(L,name);onDisconnect(L).remove();
-  $('start').style.display='none';$('lobby').style.display='flex';$('code').textContent=room;
-  $('hostui').hidden=!h;$('wait').hidden=h;
-  onValue(R('lobby'),s=>{names=s.val()||{};$('ls').innerHTML=Object.values(names).map(n=>`<li>${n.replace(/[<>&]/g,'')}</li>`).join('')});
+  room=code;host=h;name=$('nm').value.trim()||'Whale';try{localStorage.setItem('cwName',name)}catch(e){}
+  const L=R(`lobby/${id}`);await set(L,{n:name,t:Date.now()});onDisconnect(L).remove();
+  $('start').classList.add('hide');$('lobby').classList.remove('hide');$('code').textContent=room;
+  $('hostui').classList.toggle('hide',!h);$('wait').classList.toggle('hide',h);
+  onValue(R('lobby'),s=>{names=s.val()||{};const e=Object.entries(names).sort((a,b)=>a[1].t-b[1].t);
+    $('ls').innerHTML=e.map(([k,v],i)=>`<li><i style="--c:${COL[i%4]}"></i>${clean(v.n)}${i===0?'<em>HOST</em>':''}</li>`).join('')});
   onValue(R('meta'),s=>{if(s.val()&&!went){went=true;
     location.href=`index.html?room=${room}&me=${id}&n=${encodeURIComponent(name)}${host?'&host=1':''}`}});
 }
-$('mk').onclick=async()=>{const code=Math.random().toString(36).slice(2,6).toUpperCase();
-  await remove(ref(db,`rooms/${code}`));await enter(code,true)};
-$('jn').onclick=async()=>{const code=$('cd').value.trim().toUpperCase();if(!code)return;
-  room=code;const [l,m]=await Promise.all([get(R('lobby')),get(R('meta'))]);
-  if(!l.exists()){$('msg').textContent='No such room.';return}
-  if(m.exists()){$('msg').textContent='That game already started.';return}
-  if(Object.keys(l.val()).length>=MAX){$('msg').textContent='Room is full.';return}
-  $('msg').textContent='';await enter(code,false)};
+$('mk').onclick=async()=>{$('mk').disabled=true;
+  try{const code=Math.random().toString(36).slice(2,6).toUpperCase();await remove(ref(db,`rooms/${code}`));await enter(code,true)}
+  catch(e){err('Could not create room');console.error(e)}$('mk').disabled=false};
+$('jn').onclick=async()=>{const code=$('cd').value.trim().toUpperCase();if(!code)return err('Enter a room code');
+  $('jn').disabled=true;
+  try{room=code;const [l,m]=await Promise.all([get(R('lobby')),get(R('meta'))]);
+    if(!l.exists())err('No such room');
+    else if(m.exists())err('That game already started');
+    else if(Object.keys(l.val()).length>=MAX)err('Room is full');
+    else await enter(code,false)}
+  catch(e){err('Could not join room');console.error(e)}$('jn').disabled=false};
 $('go').onclick=()=>{$('go').disabled=true;
-  set(R('meta'),{seed:Math.random()*1e9|0,mode:$('md').value,count:Object.keys(names).length,round:1,startAt:Date.now()+off+5000})};
+  set(R('meta'),{seed:Math.random()*1e9|0,mode,count:Object.keys(names).length,round:1,startAt:Date.now()+off+5000})};
 </script></body></html>

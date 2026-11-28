@@ -1,19 +1,7 @@
-/* Multiplayer transports. index.html owns the game logic (MP object, mpInit, mpStart, mpState, mpEvent).
-   ?local=1&me=p1|p2  -> talks to versus.html through postMessage
-   ?room=ABCD&me=ID   -> talks to Firebase Realtime Database                                   */
+/* Online transport (Firebase Realtime Database). index.html owns the game logic.  ?room=ABCD&me=ID */
 const q=new URLSearchParams(location.search),me=q.get('me'),nm=q.get('n')||'Whale';
 
-if(q.get('local')){
-  mpInit({local:true,id:me,name:nm,
-    tx:m=>parent.postMessage({mp:m,from:me},'*'),
-    rematch:()=>parent.postMessage({rematch:1},'*')});
-  // an iframe that has focus swallows key events, so hand them to the parent page
-  addEventListener('keydown',e=>{parent.postMessage({key:e.code,rep:e.repeat},'*')});
-  addEventListener('message',e=>{const d=e.data||{};
-    if(d.flap)flap();
-    if(d.start)mpStart(d.start);
-    if(d.mp){if(d.mp.t==='s')mpState(d.from,d.mp);else if(d.mp.t==='ev'&&d.mp.to===me)mpEvent(d.mp)}});
-}else if(q.get('room')){
+if(q.get('room')){
   (async()=>{
     let F;try{F=await import('./fb.js')}catch(err){console.error(err);alert('Firebase is not configured. Edit fb.js.');return}
     const {db,ref,update,set,push,remove,onValue,onChildAdded,onDisconnect}=F;
