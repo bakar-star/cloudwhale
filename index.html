@@ -72,6 +72,9 @@ const LY={cloud:1,burger:3.5,boat:-4,balloon:1,ball:1,moon:1,ufo:3,disco:1.5,dre
 const GRAIN=(()=>{const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d'),im=x.createImageData(96,96);for(let i=0;i<im.data.length;i+=4){im.data[i]=im.data[i+1]=im.data[i+2]=Math.random()*255;im.data[i+3]=Math.random()*15}x.putImageData(im,0,0);return c})();let GP=null;
 const bolting=o=>Math.sin(t*2.5+(o.ph||0))>.55;
 const RAIN=['#ff3b3b','#ff9a2e','#ffe14a','#5be06a','#38b6ff','#9a5cff'];
+const STARC=['#ffffff','#d8f0ff','#fff7c8','#ffffff','#d8f0ff','#fff7c8'];
+/* no rainbows or clouds above the cloud layer: space and Groovetopia use star colours */
+const PAL=()=>whale&&SEA-whale.y>STORM?STARC:RAIN;
 /* sky colour by altitude: blue -> purple -> magenta -> yellow sunset -> storm above the cloud layer */
 const RAMP=[[0,'#1fc6ea'],[650,'#1fc6ea'],[1000,'#8f86f0'],[1250,'#e98adf'],[2500,'#e98adf'],[2800,'#ffb0d8'],[3000,'#ffd98a'],[3480,'#ffcf86'],[3500,'#0b1030'],[4300,'#05071a'],[5000,'#0a0430'],[5400,'#5a1fc0'],[6000,'#d93fb0'],[6600,'#ff7a5a']];
 let best=0,coins=0,owned=[0],ownedB=[],skin=0,muted=false;
@@ -148,7 +151,7 @@ function openShop(){scroll=0;toast.l=0;st='shop';sfx.tick()}
 function ry(a,b){return Math.max(SEA-CEIL+140,Math.min(SEA-70,spawnRef+a+rnd()*(b-a)))}
 function spawn(){
 if(MP.on)_s=(MP.seed+MP.n++*7919)>>>0;
-const lvl=Math.min(dist/9000,1),r=rnd(),q=rnd(),al=SEA-spawnRef;
+const lvl=Math.min(dist/9000,1),r=rnd(),q=rnd(),al=Math.max(SEA-spawnRef,SEA-whale.y);
 if(r<.58){
 const k=al>GROOVE?(q<.4?'disco':q<.7?'ufo':q<.85?'moon':'balloon'):al>STORM?(q<.38?'moon':q<.7?'ufo':q<.85?'balloon':'ball'):(q<.32?'cloud':q<.43?'toilet':q<.54?'burger':q<.65?'boat':q<.75?'balloon':q<.86?'ball':'dreidel');
 const w={cloud:44+rnd()*26-lvl*8,toilet:40,burger:46,boat:58,balloon:44,ball:40,dreidel:42,moon:46,ufo:56,disco:44}[k];
@@ -164,10 +167,10 @@ const y=ry(-90,50);for(let i=0;i<5;i++)objs.push({k:'coin',x:spawnX+i*24,y:y-Mat
 }else{
 if(rnd()<.75)donutPattern(spawnX,ry(-110,20));
 }
-if(rnd()<.07+rnd()*.09+ownedB.length*.006){let p=null;if(al>GROOVE)p=rnd()<.7?'mega':'mystery';else if(rnd()<.14)p='mystery';else{const z=al>STORM?'Outer Space':al>1000?'Pink Sky':'Blue Sky',zi=['Blue Sky','Pink Sky','Outer Space'],zl=zi.slice(0,zi.indexOf(z)+1),pool=BOOSTS.filter(b=>(b.z===z||(rnd()<.35&&zl.includes(b.z)))&&(ALL_BOOSTS||ownedB.includes(b.id))&&(dist>800||!b.adv));if(pool.length)p=pool[rnd()*pool.length|0].id}if(p)objs.push({k:'pu',p,x:spawnX+30+rnd()*120,y:ry(-120,70)})}
+if(rnd()<.07+rnd()*.09+ownedB.length*.006){let p=null;if(al>GROOVE)p=rnd()<.7?'mega':'mystery';else if(rnd()<.14)p='mystery';else{const z=al>STORM?'Outer Space':al>1000?'Pink Sky':'Blue Sky',zi=['Blue Sky','Pink Sky','Outer Space'],zl=zi.slice(0,zi.indexOf(z)+1),pool=BOOSTS.filter(b=>!(al>STORM&&b.id==='turbo')&&(b.z===z||(rnd()<.35&&zl.includes(b.z)))&&(ALL_BOOSTS||ownedB.includes(b.id))&&(dist>800||!b.adv));if(pool.length)p=pool[rnd()*pool.length|0].id}if(p)objs.push({k:'pu',p,x:spawnX+30+rnd()*120,y:ry(-120,70)})}
 /* pickups */
 if(rnd()<.07){const y=ry(-90,40),n=1+(rnd()*3|0);for(let i=0;i<n;i++)objs.push({k:'cheese',x:spawnX+30+i*24,y:y+Math.sin(i)*8})}
-if(rnd()<.03)objs.push({k:'rdon',x:spawnX+70,y:ry(-100,30)});
+if(al<STORM&&rnd()<.03)objs.push({k:'rdon',x:spawnX+70,y:ry(-100,30)});
 if(rnd()<.035)objs.push({k:'pile',x:spawnX+50,y:ry(-60,100)});
 if(al>STORM-300&&rnd()<.06)objs.push({k:'portal',x:spawnX+90,y:ry(-100,20)});
 if(dist>1500&&rnd()<.05)objs.push({k:'ring',x:spawnX+100,y:ry(-120,40)});
@@ -179,7 +182,7 @@ if(dist>6000&&rnd()<.1+lvl*.08)hz('lady',spawnX+110,-100,40);
 if(dist>9000&&rnd()<.08+lvl*.04)hz('octo',spawnX+120,-100,30);
 if(dist>11000&&rnd()<.07)hz('dryer',spawnX+130,-150,-40);
 if(dist>3500&&rnd()<.12+lvl*.08){const n=1+(rnd()*3|0),y=ry(-100,40);for(let i=0;i<n;i++){const yy=y+(i%2?1:-1)*Math.ceil(i/2)*16;objs.push({k:'crow',x:spawnX+100+i*30,y:yy,y0:yy,ph:rnd()*6})}}
-if(dist>8000&&rnd()<.1+lvl*.06)hz('storm',spawnX+90,-110,-20);
+if(al<STORM-150&&dist>8000&&rnd()<.1+lvl*.06)hz('storm',spawnX+90,-110,-20);
 if(rnd()<.4){const n=1+(rnd()*2|0);for(let i=0;i<n;i++)objs.push({k:'don',x:spawnX+rnd()*190,y:ry(-120,90),v:rnd()*3|0})}
 spawnX+=130+rnd()*170+lvl*50;
 }
@@ -215,7 +218,7 @@ else if(p==='clover'){lucky=12;P('Lucky! Donuts x2','#9be86f')}
 else if(p==='slow'){slowT=7;P('Time Freeze!','#bff3ff')}
 else if(p==='comet'){boost=bmax=2;bm=3.6;ride=0;cometT=2;bonus+=30;P('COMET! +30','#ffb46a');burst(o.x,o.y,18,['#ffb46a','#fff3c0','#fff'],170)}
 else if(p==='mystery'){const al=SEA-whale.y,z=al>STORM?'Outer Space':al>1000?'Pink Sky':'Blue Sky',pl=BOOSTS.filter(b=>b.z===z&&b.id!=='scuba'&&(dist>800||!b.adv)),q=pl[Math.random()*pl.length|0];if(q){P('Mystery: '+q.n+'!','#ffd23f');applyPU(q.id,o)}}
-else if(p==='mega'){boost=bmax=3;bm=3.4;ride=0;bonus+=50;P('MEGA BOOST! +50','#ff9ad8');burst(o.x,o.y,20,RAIN,170)}
+else if(p==='mega'){boost=bmax=3;bm=3.4;ride=0;bonus+=50;P('MEGA BOOST! +50','#ff9ad8');burst(o.x,o.y,20,PAL(),170)}
 }
 function spawnUW(){
 if(MP.on)_s=(MP.seed+MP.n++*7919)>>>0;
@@ -380,7 +383,7 @@ trailT-=dt;
 if(trailT<=0&&boost<=0&&air){trailT=.07;parts.push({x:whale.x-18,y:whale.y+1,vx:-30,vy:0,g:0,l:1,dec:2.4,c:'rgba(255,255,255,.7)',r:2.5})}
 if(boost>0){boost-=dt;whale.vy=0;if(cometT>0&&Math.random()<dt*14)objs.push({k:'coin',x:W+10,y:whale.y+(Math.random()-.5)*50});if(ride==='rocket'&&Math.random()<dt*10)objs.push({k:'don',x:W+10,y:whale.y+(Math.random()-.5)*60,v:Math.random()*3|0});
 if(ride==='sleigh'&&Math.random()<dt*12)objs.push({k:'don',x:W+10,y:whale.y+(Math.random()-.5)*44,v:Math.random()*3|0});
-if(ride==='broom'){whale.y+=(SEA-STORM-320-whale.y)*Math.min(1,dt*1.6);if(Math.random()<dt*30)parts.push({x:whale.x-30,y:whale.y+8,vx:-60,vy:(Math.random()-.5)*40,g:0,l:1,dec:1.6,c:RAIN[Math.random()*6|0],r:2})}
+if(ride==='broom'){whale.y+=(SEA-STORM-320-whale.y)*Math.min(1,dt*1.6);if(Math.random()<dt*30)parts.push({x:whale.x-30,y:whale.y+8,vx:-60,vy:(Math.random()-.5)*40,g:0,l:1,dec:1.6,c:PAL()[Math.random()*6|0],r:2})}
 if(ride==='sub'&&Math.random()<dt*20)parts.push({x:whale.x-30,y:whale.y+6,vx:-40,vy:-30,g:-10,l:1,dec:1.2,c:'rgba(230,250,255,.8)',r:2});
 if(boost<=0){whale.vy=-60;ride=0;bm=2.2}}
 else if(!air){
@@ -404,18 +407,22 @@ const top=SEA-CEIL;if(whale.y<top){whale.y=top;whale.vy=Math.max(whale.vy,0)}
 /* outer space and Groovetopia: low gravity, new bouncers */
 if(alt>STORM&&!inSpace){inSpace=1;banner={s:'OUTER SPACE!',l:1.6};bonus+=50;sfx.star()}
 if(alt>GROOVE&&!inGroove){inGroove=1;banner={s:'GROOVETOPIA!',l:1.6};bonus+=100;sfx.star()}
-for(const o of objs)if(BOUNCE[o.k]&&!o.got&&whale.vy>0){
-const b=whale.y+BH,pb=py+BH,top2=o.y+(LY[o.k]||0),ow=o.w*(o.s||1);
-if(pb<=top2+6&&b>=top2&&whale.x>o.x-14&&whale.x<o.x+ow+14){
-whale.vy=-BOUNCE[o.k];whale.y=top2-BH;o.hit=.25;combo++;streak++;if(streak%5===0){fuel=Math.min(9,fuel+1);pop(whale.x,top2-70,'Bounce streak x'+streak+'! +1 donut','#9be86f');burst(whale.x,top2,14,RAIN,140);sfx.star()}
+for(const o of objs)if(BOUNCE[o.k]&&!o.got){
+if(o.cd>0){o.cd-=dt;continue}
+const b=whale.y+BH,pb=py+BH,top2=o.y+(LY[o.k]||0),ow=o.w*(o.s||1),oh=Math.max(26,ow*.6);
+/* touching a bouncer from ANY side (top, bottom, left, right) launches the whale upward */
+const fromTop=whale.vy>0&&pb<=top2+8;
+if(whale.x>o.x-16&&whale.x<o.x+ow+16&&b>=top2&&whale.y-BH<=top2+oh){
+o.cd=.22;if(fromTop)whale.y=top2-BH;else whale.y=Math.min(whale.y,top2+oh*.5);
+whale.vy=-BOUNCE[o.k];o.hit=.25;combo++;streak++;if(streak%5===0){fuel=Math.min(9,fuel+1);pop(whale.x,top2-70,'Bounce streak x'+streak+'! +1 donut','#9be86f');burst(whale.x,top2,14,PAL(),140);sfx.star()}
 cnames.push(NAME[o.k]);if(cnames.length>3)cnames.shift();
 if(combo>=2)cb={s:(['','','Double','Triple','Quad'][combo]||'Mega')+' '+cnames.join(' '),l:1.8};
 if(combo>=3){const b2=combo*5;bonus+=b2;pop(whale.x,top2-34,'Combo x'+combo+' +'+b2,'#ffd23f')}
 {const cc=COMBOS[cnames.slice(-3).sort().join('+')]||COMBOS[cnames.slice(-2).sort().join('+')];
-if(cc){mpHit('steal');bonus+=cc[1];fuel=Math.min(9,fuel+cc[2]);cb={s:cc[0]+'!',l:2};pop(whale.x,top2-52,'+'+cc[1]+(cc[2]?'  +'+cc[2]+' donuts':''),'#ff9ad8');burst(whale.x,top2,16,RAIN,150);sfx.star();
+if(cc){mpHit('steal');bonus+=cc[1];fuel=Math.min(9,fuel+cc[2]);cb={s:cc[0]+'!',l:2};pop(whale.x,top2-52,'+'+cc[1]+(cc[2]?'  +'+cc[2]+' donuts':''),'#ff9ad8');burst(whale.x,top2,16,PAL(),150);sfx.star();
 if(cc[3]){boost=bmax=2.2;bm=2.2;ride=0;pop(whale.x,top2-70,'SUGAR RUSH!','#ff9ad8')}cnames=[]}}
 if(o.k==='dreidel'){for(let i=0;i<14;i++){const a=i/14*Math.PI*2;objs.push({k:'don',x:o.x+20+Math.cos(a)*(30+i*3),y:top2-34+Math.sin(a)*(22+i*2),v:i%3})}sfx.star();pop(whale.x,top2-34,'Donut blast!','#ffd1e3')}
-if(o.k==='balloon'){o.got=1;sfx.pop();pop(whale.x,top2-10,'SUPER!','#ff8f8f');burst(o.x+22,top2+10,16,RAIN,130)}
+if(o.k==='balloon'){o.got=1;sfx.pop();pop(whale.x,top2-10,'SUPER!','#ff8f8f');burst(o.x+22,top2+10,16,PAL(),130)}
 else{pop(whale.x,top2-10,YELL[o.k],'#fff');o.k==='cloud'||o.k==='boat'||o.k==='ball'?sfx.bounce():sfx.squeak();burst(whale.x,top2,7,['#fff','#fff3c0'],70)}
 }
 }
@@ -439,16 +446,16 @@ if(o.k==='don'&&!o.got&&d<25){o.got=1;fuel=Math.min(9,fuel+(lucky>0?2:1));pop(o.
 else if(o.k==='coin'&&!o.got&&d<22){o.got=1;coins++;runCoins++;sfx.coin();burst(o.x,o.y,5,['#b7e8a0','#fff'],70)}
 else if(o.k==='pu'&&!o.got&&d<26){o.got=1;sfx.star();burst(o.x,o.y,16,['#ffd23f','#fff'],140);applyPU(o.p,o)}
 else if(o.k==='cheese'&&!o.got&&d<22){o.got=1;bonus+=10;pop(o.x,o.y,'+10','#ffe14a');sfx.coin();burst(o.x,o.y,6,['#ffd23a','#fff'],80)}
-else if(o.k==='rdon'&&!o.got&&d<28){o.got=1;boost=bmax=2.2;bm=2.2;ride=0;sfx.star();pop(o.x,o.y-10,'SUGAR RUSH!','#ff9ad8');burst(o.x,o.y,22,RAIN,170);mpHit()}
+else if(o.k==='rdon'&&!o.got&&d<28){o.got=1;boost=bmax=2.2;bm=2.2;ride=0;sfx.star();pop(o.x,o.y-10,'SUGAR RUSH!','#ff9ad8');burst(o.x,o.y,22,PAL(),170);mpHit()}
 else if(o.k==='pile'&&!o.got&&d<28){o.got=1;sfx.star();pop(o.x,o.y-14,'Donut pile!','#ffd1e3');burst(o.x,o.y,16,['#6a3f2f','#ff8fb8','#fff'],150);for(let i=0;i<12;i++)objs.push({k:'don',x:o.x+20+i*17,y:o.y+Math.sin(i*.75)*34-8,v:i%3})}
 else if(o.k==='ring'&&!o.got&&Math.abs(o.x-whale.x)<12&&Math.abs(o.y-whale.y)<36){o.got=1;whale.vy=-520;bonus+=15;sfx.launch();pop(whale.x,whale.y-30,'Warp! +15','#bff3ff');burst(o.x,o.y,20,['#bff3ff','#fff','#ffe14a'],150)}
 else if(o.k==='jet'&&!o.got&&d<26){o.got=1;boost=bmax=1;bm=2.6;ride=0;pop(o.x,o.y-14,'Booster!','#ffd86a');sfx.launch();burst(o.x,o.y,14,['#ffd86a','#fff'],130)}
-else if(o.k==='portal'&&!o.got&&d<30){o.got=1;scr=6;bonus+=30;sfx.star();burst(o.x,o.y,24,RAIN,170);if(SEA-whale.y<GROOVE){whale.y=SEA-GROOVE-140;whale.vy=-100;cam=150-whale.y;spawnRef=whale.y;spawnX=W+80;pop(whale.x,whale.y-34,'GROOVETOPIA!','#ff9ad8')}else pop(whale.x,whale.y-34,'Wearables scrambled!','#ff9ad8')}
+else if(o.k==='portal'&&!o.got&&d<30){o.got=1;scr=6;bonus+=30;sfx.star();burst(o.x,o.y,24,PAL(),170);if(SEA-whale.y<GROOVE){whale.y=SEA-GROOVE-140;whale.vy=-100;cam=150-whale.y;spawnRef=whale.y;spawnX=W+80;pop(whale.x,whale.y-34,'GROOVETOPIA!','#ff9ad8')}else pop(whale.x,whale.y-34,'Wearables scrambled!','#ff9ad8')}
 else if(o.k==='storm'&&!inv&&boost<=0&&((d<HR.storm)||(bolting(o)&&Math.abs(whale.x-o.x)<14&&whale.y>o.y+14&&whale.y<o.y+56))){hurt();if(bolting(o)){flash=.15;sfx.zap()}}
 else if(HR[o.k]&&o.k!=='storm'&&!inv&&boost<=0&&d<HR[o.k])hurt();
 else if(HR[o.k]&&!o.near&&!o.got&&inv<=0&&boost<=0&&d<HR[o.k]+13&&d>=HR[o.k]){o.near=1;bonus+=5;pop(whale.x+10,whale.y-26,'Close call! +5','#ffe14a');sfx.coin();burst(whale.x,whale.y,6,['#ffe14a','#fff'],80)}
 }
-objs=objs.filter(o=>o.x>-120&&!o.got);
+objs=objs.filter(o=>o.x>-120&&!o.got&&!(SEA-whale.y>STORM+200&&(o.k==='cloud'||o.k==='storm'||o.k==='rdon')));
 /* camera: sea stays in view near the water, otherwise follow the whale up */
 const camT=air&&!under?Math.max(0,150-whale.y):Math.max(-256,150-whale.y);
 cam+=(camT-cam)*Math.min(1,dt*7);
@@ -1145,7 +1152,7 @@ const cx=oRestart.x+oRestart.w/2,cy=oRestart.y+oRestart.h/2;g.strokeStyle='#4a1a
 }
 try{document.fonts.load('700 20px Fredoka')}catch(e){}
 reset();cam=0;fit();window.focus();cv.focus();
-function loop(n){const dt=Math.max(0,Math.min(.033,(n-last)/1000));last=n;update(dt);draw();requestAnimationFrame(loop)}
+function loop(n){const dt=Math.max(0,Math.min(.033,(n-last)/1000));last=n;const n2=Math.max(1,Math.ceil(dt/(1/120)));for(let i=0;i<n2;i++)update(dt/n2);draw();requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
 </script>
 <script type="module" src="mp.js"></script>
