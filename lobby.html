@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cloud Whale Online</title>
+<style>
+body{margin:0;min-height:100vh;font:16px system-ui,sans-serif;background:#0f8fb8;color:#fff;display:flex;flex-direction:column;align-items:center;padding:28px 16px;box-sizing:border-box;text-align:center;gap:12px}
+input,select,button{font:inherit;padding:10px 14px;border-radius:12px;border:0}
+button{background:#8a2ee0;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.5}
+#lobby{display:none;flex-direction:column;gap:10px;align-items:center}
+#code{font-size:44px;font-weight:800;letter-spacing:6px}
+ul{list-style:none;padding:0;margin:0;min-width:200px}li{padding:6px 12px;margin:4px 0;background:rgba(0,0,0,.25);border-radius:10px}
+#msg{min-height:1.4em;color:#ffe;}
+a{color:#fff}
+</style></head><body>
+<h1>Cloud Whale Online</h1>
+<div id="start">
+  <p><input id="nm" placeholder="Your name" maxlength="10"></p>
+  <p><button id="mk">Create room</button></p>
+  <p>or join: <input id="cd" placeholder="Code" maxlength="4" size="5" style="text-transform:uppercase"> <button id="jn">Join</button></p>
+</div>
+<div id="lobby">
+  <div>Room code</div><div id="code"></div>
+  <ul id="ls"></ul>
+  <div id="hostui" hidden>
+    <select id="md"><option value="race">Race (furthest wins)</option><option value="last">Last whale standing</option></select>
+    <button id="go">Start</button>
+  </div>
+  <div id="wait" hidden>Waiting for the host to start…</div>
+</div>
+<div id="msg"></div>
+<a href="index.html">← Back to game</a>
+<script type="module">
+const $=i=>document.getElementById(i),id='u'+Math.random().toString(36).slice(2,8),MAX=4;
+let F;try{F=await import('./fb.js')}catch(e){$('msg').textContent='Firebase not configured: edit fb.js';throw e}
+const {db,ref,set,get,remove,onValue,onDisconnect}=F;
+let room,host=false,off=0,names={},went=false,name='Whale';
+onValue(ref(db,'.info/serverTimeOffset'),s=>off=s.val()||0);
+const R=p=>ref(db,`rooms/${room}/${p}`);
+async function enter(code,h){
+  room=code;host=h;name=$('nm').value.trim()||'Whale';
+  const L=R(`lobby/${id}`);await set(L,name);onDisconnect(L).remove();
+  $('start').style.display='none';$('lobby').style.display='flex';$('code').textContent=room;
+  $('hostui').hidden=!h;$('wait').hidden=h;
+  onValue(R('lobby'),s=>{names=s.val()||{};$('ls').innerHTML=Object.values(names).map(n=>`<li>${n.replace(/[<>&]/g,'')}</li>`).join('')});
+  onValue(R('meta'),s=>{if(s.val()&&!went){went=true;
+    location.href=`index.html?room=${room}&me=${id}&n=${encodeURIComponent(name)}${host?'&host=1':''}`}});
+}
+$('mk').onclick=async()=>{const code=Math.random().toString(36).slice(2,6).toUpperCase();
+  await remove(ref(db,`rooms/${code}`));await enter(code,true)};
+$('jn').onclick=async()=>{const code=$('cd').value.trim().toUpperCase();if(!code)return;
+  room=code;const [l,m]=await Promise.all([get(R('lobby')),get(R('meta'))]);
+  if(!l.exists()){$('msg').textContent='No such room.';return}
+  if(m.exists()){$('msg').textContent='That game already started.';return}
+  if(Object.keys(l.val()).length>=MAX){$('msg').textContent='Room is full.';return}
+  $('msg').textContent='';await enter(code,false)};
+$('go').onclick=()=>{$('go').disabled=true;
+  set(R('meta'),{seed:Math.random()*1e9|0,mode:$('md').value,count:Object.keys(names).length,round:1,startAt:Date.now()+off+5000})};
+</script></body></html>
