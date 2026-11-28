@@ -18,7 +18,7 @@ async function profile(user){
     const name=user.displayName;if(!name)throw {code:'app/no-name'};
     const cl=ref(db,'usernames/'+name.toLowerCase()),c=await get(cl);
     if(!c.exists())await set(cl,user.uid);else if(c.val()!==user.uid)throw {code:'app/name-taken'};
-    await set(R,{name,coins:0,best:0,skin:'0',owned:{0:true},n:1,t:serverTimestamp(),joined:serverTimestamp(),tut:false});
+    await set(R,{name,coins:0,best:0,skin:'0',owned:{0:true},t:serverTimestamp(),joined:serverTimestamp(),tut:false});
     s=await get(R);
   }
   U=R;S=s.val();
@@ -38,7 +38,7 @@ C.reset=email=>sendPasswordResetEmail(auth,email);
 C.logout=async()=>{await signOut(auth);U=S=null;C.on=false;C.name='';setState('out');window.cloudLoggedOut&&cloudLoggedOut()};
 
 C.earn=(coins,best)=>run(async()=>{const u={};if(coins>S.coins)u.coins=coins;if(best>S.best)u.best=best;if(!Object.keys(u).length)return;u.t=serverTimestamp();try{await update(U,u);await sync()}catch(e){await refuse(e)}});
-C.buy=(kind,id,price)=>run(async()=>{const u={coins:S.coins-price,n:S.n+1};
+C.buy=(kind,id,price)=>run(async()=>{const u={coins:S.coins-price,last:(kind==='boost'?'b':'s')+id};
   if(kind==='boost')u['ownedB/'+id]=true;else{u['owned/'+id]=true;u.skin=String(id)}
   try{await update(U,u);await sync()}catch(e){await refuse(e)}});
 C.equip=i=>run(async()=>{try{await update(U,{skin:String(i)});await sync()}catch(e){await refuse(e)}});
