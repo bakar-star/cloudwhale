@@ -5,6 +5,7 @@ if(q.get('room')){
   (async()=>{
     let F;try{F=await import('./fb.js')}catch(err){console.error(err);alert('Firebase is not configured. Edit fb.js.');return}
     const {db,ref,update,set,push,remove,onValue,onChildAdded,onDisconnect}=F;
+    await F.authReady;
     const room=q.get('room'),host=!!q.get('host'),R=p=>ref(db,`rooms/${room}/${p}`),P=R(`players/${me}`);
     let off=0;
     onValue(ref(db,'.info/serverTimeOffset'),s=>off=s.val()||0);

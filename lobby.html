@@ -47,11 +47,16 @@ li em{margin-left:auto;font-style:normal;font-size:12px;color:#fff;background:#f
 <h1>CLOUD<br>WHALE<small>MULTIPLAYER</small></h1>
 
 <div class="card" id="start">
-  <div><label for="nm">Your name</label><input id="nm" placeholder="Whale" maxlength="10" autocomplete="off"></div>
+  <div class="hint" style="color:#fff">Playing as <b id="who" style="color:var(--gold)"></b></div>
   <button class="btn gold" id="mk">Create room</button>
   <div class="or">or join a friend</div>
   <div><input id="cd" placeholder="CODE" maxlength="4" autocomplete="off"></div>
   <button class="btn" id="jn">Join room</button>
+</div>
+
+<div class="card hide" id="needlogin">
+  <div class="hint" style="color:#fff;font-size:17px">Log in or sign up from the main menu to play multiplayer.</div>
+  <a class="btn gold" style="text-decoration:none;text-align:center" href="index.html">Go to the game</a>
 </div>
 
 <div class="card hide" id="lobby">
@@ -71,21 +76,27 @@ li em{margin-left:auto;font-style:normal;font-size:12px;color:#fff;background:#f
 <a class="back" href="index.html">← Back to game</a>
 
 <script type="module">
-const $=i=>document.getElementById(i),id='u'+Math.random().toString(36).slice(2,8),MAX=4;
+const $=i=>document.getElementById(i),MAX=4;let id='';
 const COL=['#c455e0','#ff9acb','#86f2c4','#ffe27a'];
 function err(t){const m=$('msg');m.textContent=t;m.style.display=t?'block':'none';if(t)setTimeout(()=>m.style.display='none',3500)}
 let F;try{F=await import('./fb.js')}catch(e){err('Could not connect to Firebase. Check fb.js');throw e}
-const {db,ref,set,get,remove,onValue,onDisconnect}=F;
-let room,host=false,off=0,names={},went=false,name='Whale',mode='race';
+const {db,ref,set,get,remove,onValue,onDisconnect,authReady}=F;
+/* players use the name they signed up with; their account id is their player id */
+$('start').classList.add('hide');
+const user=await authReady;
+if(!user){$('needlogin').classList.remove('hide');throw new Error('not signed in')}
+id=user.uid;let name=user.displayName||'Whale';
+try{const pr=await get(ref(db,'users/'+id+'/name'));if(pr.exists())name=pr.val()}catch(e){}
+$('who').textContent=name;$('start').classList.remove('hide');
+let room,host=false,off=0,names={},went=false,mode='race';
 onValue(ref(db,'.info/serverTimeOffset'),s=>off=s.val()||0);
 const R=p=>ref(db,`rooms/${room}/${p}`);
 const clean=s=>String(s).replace(/[<>&"]/g,'');
-$('nm').value=localStorage.getItem('cwName')||'';
 document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;
   document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x===b));
   $('mh').textContent=mode==='race'?'Furthest whale wins':'Last whale flying wins'});
 async function enter(code,h){
-  room=code;host=h;name=$('nm').value.trim()||'Whale';try{localStorage.setItem('cwName',name)}catch(e){}
+  room=code;host=h;
   const L=R(`lobby/${id}`);await set(L,{n:name,t:Date.now()});onDisconnect(L).remove();
   $('start').classList.add('hide');$('lobby').classList.remove('hide');$('code').textContent=room;
   $('hostui').classList.toggle('hide',!h);$('wait').classList.toggle('hide',h);
