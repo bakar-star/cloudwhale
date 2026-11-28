@@ -60,6 +60,53 @@ ps.color1=new B.Color4(1,1,.9,.5);ps.color2=new B.Color4(.8,.9,1,.4);ps.colorDea
 /* bloom + vignette + antialiasing */
 const pl=new B.DefaultRenderingPipeline('pl',false,sc,[cam]);pl.fxaaEnabled=true;pl.bloomEnabled=true;pl.bloomThreshold=.78;pl.bloomWeight=.32;pl.bloomKernel=40;pl.bloomScale=.5;
 pl.imageProcessingEnabled=true;pl.imageProcessing.vignetteEnabled=true;pl.imageProcessing.vignetteWeight=1.4;pl.imageProcessing.contrast=1.08;
+
+/* ---- 3D whale, cash and obstacles (primitives) ---- */
+const WH=new B.Color3(1,1,1),hc=new Map(),hexC=h=>{let c=hc.get(h);if(!c){c=/^#[0-9a-f]{6}$/i.test(h)?B.Color3.FromHexString(h):new B.Color3(.6,.6,.6);hc.set(h,c)}return c};
+function P(root,t,mat,o,pos,scl,rot){let m;
+ if(t==='s')m=B.MeshBuilder.CreateSphere('p',{diameter:1,segments:12},sc);
+ else if(t==='b')m=B.MeshBuilder.CreateBox('p',{size:1},sc);
+ else if(t==='i')m=B.MeshBuilder.CreateIcoSphere('p',{radius:.5,subdivisions:1,flat:true},sc);
+ else m=B.MeshBuilder.CreateCylinder('p',Object.assign({tessellation:20},o),sc);
+ if(scl)m.scaling.set(scl[0],scl[1],scl[2]);if(pos)m.position.set(pos[0],pos[1],pos[2]);if(rot)m.rotation.set(rot[0],rot[1],rot[2]);m.material=mat;m.parent=root;return m}
+const wp=[];
+function mkWhale(){const r=new B.TransformNode('w',sc),mb=std(.5,.2,.7,.15),mbel=std(.9,.8,.95,.2),mt=std(.4,.1,.5,.15),mh=std(.97,.79,.28,.3),mw=std(1,1,1,.4),mk=std(0,0,0,0),ms=std(.9,.15,.15,.2),mp=std(.45,.45,.55,.2);
+ P(r,'s',mb,0,[-3,0,0],[74,36,32]);P(r,'s',mbel,0,[0,-7,-4],[60,20,28]);
+ const tail=new B.TransformNode('t',sc);tail.parent=r;tail.position.set(-40,0,0);P(tail,'s',mt,0,[-14,5,0],[16,28,5]);P(tail,'s',mt,0,[-6,0,0],[18,10,8]);
+ P(r,'s',mt,0,[2,-5,-15],[20,9,4],[0,0,.5]);
+ P(r,'c',mh,{height:38,diameterTop:0,diameterBottom:8},[48,6,0],null,[0,0,-Math.PI/2+.2]);
+ for(const x of[17,27]){P(r,'s',mw,0,[x,5,-15],[10,11,6]);P(r,'s',mk,0,[x+1.5,4.5,-18],[5,6,3])}
+ P(r,'c',mp,{height:8,diameter:2},[2,20,0]);const blade=P(r,'b',mp,0,[2,24,0],[34,1,3]);
+ for(const x of[-3,10]){P(r,'c',mp,{height:8,diameter:3},[x,-19,-3]);P(r,'b',ms,0,[x,-23,-3],[10,5,9])}
+ r.setEnabled(false);return{r,mb,mbel,mt,tail,blade,mats:[mb,mbel,mt,mh,mw,mk,ms,mp]}}
+function setWhale(q,w,p){const a=hexC(w.a);q.mb.diffuseColor.copyFrom(hexC(w.b));q.mb.emissiveColor.copyFrom(hexC(w.b).scale(.15));
+ q.mbel.diffuseColor.copyFrom(B.Color3.Lerp(a,WH,.6));q.mt.diffuseColor.copyFrom(hexC(w.t));
+ for(const m of q.mats)m.alpha=w.al;
+ q.r.setEnabled(true);q.r.position.set(w.x,-(w.y+p.cam),-30);q.r.rotation.set(0,.25,-w.ang);q.r.scaling.setAll(w.sc);
+ q.tail.rotation.z=Math.sin(p.t*14)*.35;q.blade.rotation.y=p.t*30}
+const obs=new Map(),HAS=new Set(['coin','cloud','storm','toilet','burger','boat','balloon','ball','dreidel','moon','ufo','disco','crow','bee','meteor','rock']);
+function mkObs(k){const r=new B.TransformNode('o',sc);let wings=null;
+ switch(k){
+ case'coin':{P(r,'b',std(.3,.75,.35,.3),0,[0,0,0],[22,12,3]);P(r,'b',std(.9,.82,.55,.3),0,[0,0,-.3],[6,12.5,3.4]);break}
+ case'cloud':case'storm':{const m=k==='cloud'?std(.97,.98,1,.55):std(.35,.38,.5,.2);P(r,'s',m,0,[-14,-2,0],[32,28,28]);P(r,'s',m,0,[2,5,0],[42,36,32]);P(r,'s',m,0,[18,-2,0],[34,28,28]);P(r,'b',m,0,[2,-8,0],[44,12,26]);break}
+ case'toilet':{const m=std(.96,.97,1,.35);P(r,'c',m,{height:14,diameter:30},[0,-6,0]);P(r,'b',m,0,[0,10,6],[26,24,10]);P(r,'c',m,{height:10,diameter:16},[0,-16,0]);break}
+ case'burger':{const bun=std(.88,.6,.28,.3);P(r,'c',bun,{height:8,diameter:44},[0,-10,0]);P(r,'c',std(.4,.2,.1,.2),{height:8,diameter:46},[0,-3,0]);P(r,'c',std(.3,.75,.3,.3),{height:4,diameter:48},[0,2,0]);P(r,'s',bun,0,[0,8,0],[44,22,44]);break}
+ case'boat':{P(r,'b',std(.6,.38,.2,.25),0,[0,-4,0],[58,14,20]);P(r,'c',std(.4,.25,.12,.2),{height:30,diameter:2},[4,14,0]);P(r,'b',std(.9,.2,.2,.3),0,[-10,6,0],[10,8,8]);break}
+ case'balloon':{P(r,'s',std(.95,.25,.25,.35),0,[0,6,0],[44,50,44]);P(r,'s',std(1,.9,.3,.4),0,[0,6,0],[10,51,45]);P(r,'b',std(.55,.35,.2,.2),0,[0,-26,0],[14,10,12]);break}
+ case'ball':{P(r,'s',std(1,.45,.7,.35),0,[0,0,0],[40,40,40]);P(r,'s',std(1,1,1,.4),0,[0,0,0],[8,41,41]);break}
+ case'dreidel':{const m=std(.25,.5,.95,.3);P(r,'b',m,0,[0,6,0],[28,28,28]);P(r,'c',m,{height:16,diameterTop:28,diameterBottom:0},[0,-14,0]);P(r,'c',std(.9,.8,.5,.2),{height:8,diameter:4},[0,24,0]);break}
+ case'moon':{P(r,'s',std(1,.95,.7,.45),0,[0,0,0],[46,46,46]);const c=std(.85,.8,.55,.2);P(r,'s',c,0,[-8,6,-18],[10,10,5]);P(r,'s',c,0,[8,-8,-19],[7,7,4]);break}
+ case'ufo':{P(r,'s',std(.7,.75,.85,.4),0,[0,0,0],[56,14,56]);P(r,'s',std(.5,.9,1,.5),0,[0,7,0],[26,22,26]);for(const x of[-18,0,18])P(r,'s',std(1,.9,.3,1),0,[x,-1,-20],[5,5,5]);break}
+ case'disco':{P(r,'s',std(.85,.88,.95,.9),0,[0,0,0],[44,44,44]);break}
+ case'crow':{P(r,'s',std(.08,.08,.1,.1),0,[0,0,0],[26,13,11]);P(r,'s',std(.08,.08,.1,.1),0,[12,3,0],[11,10,9]);P(r,'c',std(1,.65,.15,.3),{height:7,diameterTop:0,diameterBottom:4},[19,3,0],null,[0,0,-Math.PI/2]);
+  const wm=std(.12,.12,.16,.1);wings=[P(r,'b',wm,0,[-2,9,0],[6,18,2]),P(r,'b',wm,0,[-2,-9,0],[6,18,2])];break}
+ case'bee':{P(r,'s',std(1,.82,.1,.4),0,[0,0,0],[18,13,13]);const bk=std(.05,.05,.05,0);P(r,'b',bk,0,[-2,0,0],[3,13.5,13.5]);P(r,'b',bk,0,[4,0,0],[3,12,12]);
+  const wm=std(.9,.95,1,.5);wings=[P(r,'s',wm,0,[0,8,2],[8,12,2]),P(r,'s',wm,0,[0,8,-2],[8,12,2])];break}
+ case'meteor':{P(r,'s',std(1,.55,.2,.9),0,[0,0,0],[18,18,18]);P(r,'c',std(1,.5,.15,.8),{height:50,diameterTop:0,diameterBottom:12},[25,19,2],null,[0,0,.65-Math.PI/2]);break}
+ case'rock':{P(r,'i',std(.5,.48,.5,.15),0,[0,0,0],[40,36,36]);break}
+ default:return null}
+ return{r,wings}}
+G.has=k=>HAS.has(k);G.whale3d=true;
 const cT=new B.Color3(),cM=new B.Color3(),cB=new B.Color3();let lw=0,lh=0;
 G.update=p=>{if(!G.ready)return;try{
  cv.style.visibility='visible';
@@ -70,6 +117,12 @@ G.update=p=>{if(!G.ready)return;try{
  let u=0;for(const o of p.d){if(u>=pool.length){if(pool.length>=90)break;pool.push(make())}const d=pool[u++];d.root.setEnabled(true);
   d.root.position.set(o.x,-(o.y+Math.sin(p.t*4+o.x*.05)*2.5+p.cam),0);d.root.rotation.set(Math.sin(p.t*1.1+o.x*.03)*.35,Math.sin(p.t*1.5+o.x*.05)*.6,0);d.frost.material=frostM[o.v||0]}
  for(let i=u;i<pool.length;i++)pool[i].root.setEnabled(false);
+ let wi=0;for(const w of(p.w||[])){if(wi>=wp.length){if(wp.length>=8)break;wp.push(mkWhale())}setWhale(wp[wi++],w,p)}for(let i=wi;i<wp.length;i++)wp[i].r.setEnabled(false);
+ const seen=new Set();for(const o of(p.o||[])){let n=obs.get(o.ref);if(!n){n=mkObs(o.k);if(!n)continue;obs.set(o.ref,n)}seen.add(o.ref);
+  n.r.setEnabled(true);n.r.position.set(o.x,-(o.y+p.cam),-5);n.r.scaling.set(o.sc,o.sc*(o.hit?.8:1),o.sc);
+  n.r.rotation.z=o.k==='rock'?-o.rot:o.k==='coin'?Math.sin(p.t*3+o.ph)*.15:Math.sin(p.t*2+o.x*.02)*.05;n.r.rotation.y=Math.sin(p.t*1.2+o.x*.03)*.35;
+  if(n.wings){const f=Math.sin(p.t*(o.k==='bee'?50:14)+o.ph)*.8;n.wings.forEach((m,i)=>m.rotation.z=(i?-1:1)*f)}}
+ for(const[ref,n]of obs)if(!seen.has(ref)){n.r.getChildMeshes().forEach(m=>m.dispose());n.r.dispose();obs.delete(ref)}
  sc.render()}catch(e){fail(e)}};
 G.hide=()=>{cv.style.visibility='hidden'};
 G.ready=true;
